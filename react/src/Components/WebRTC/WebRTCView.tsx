@@ -1,9 +1,9 @@
-import WebRTCScrean from "./WebRTCScrean";
+import WebRTCScreen from "./WebRTCScreen";
 
 function WebRTCView() {
   return (
     <>
-      <WebRTCScrean></WebRTCScrean>
+      <WebRTCScreen></WebRTCScreen>
       <div className="input-group mb-3">
         <button
           className="btn btn-outline-secondary"
