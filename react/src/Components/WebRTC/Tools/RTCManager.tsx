@@ -16,8 +16,8 @@ function RTCManager({ isOffering }: Props): RTCManager {
       { urls: "stun:stun1.l.google.com:19302" },
     ],
   };
-  const { addIceCandidates, addSessionDescription, startCall, endCall } =
-    RTCApi({
+  const { addIceCandidate, addSessionDescription, startCall, endCall } = RTCApi(
+    {
       isOffering: isOffering,
       useVideo: true,
       useAudio: true,
@@ -29,13 +29,14 @@ function RTCManager({ isOffering }: Props): RTCManager {
       onRemoteStream: (stream) => {
         console.log("===Remote stream available===", stream);
       },
-      onIceCandidates: (candidate) => {
+      onIceCandidate: (candidate) => {
         console.log("===Need to send local ICE candidate===", candidate);
       },
       onSessionDescription: (session) => {
         console.log("===Need to send local SDP===", session);
       },
-    });
+    }
+  );
 
   return { startCall, endCall };
 }

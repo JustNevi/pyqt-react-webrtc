@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
 export interface RTCApi {
-  addIceCandidates: (candidate: RTCIceCandidate) => void;
+  addIceCandidate: (candidate: RTCIceCandidate) => void;
   addSessionDescription: (session: RTCSessionDescriptionInit) => void;
   startCall: () => void;
   endCall: () => void;
@@ -18,7 +18,7 @@ interface Props {
   // Events
   onLocalStream: (stream: MediaStream) => void;
   onRemoteStream: (stream: MediaStream) => void;
-  onIceCandidates: (candidate: RTCIceCandidate) => void;
+  onIceCandidate: (candidate: RTCIceCandidate) => void;
   onSessionDescription: (session: RTCSessionDescriptionInit) => void;
   onError?: (error: string) => void;
 }
@@ -31,7 +31,7 @@ function RTCApi({
   config,
   onLocalStream,
   onRemoteStream,
-  onIceCandidates,
+  onIceCandidate,
   onSessionDescription,
   onError,
 }: Props): RTCApi {
@@ -49,7 +49,7 @@ function RTCApi({
     // Handle ICE candidates
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        onIceCandidates(event.candidate);
+        onIceCandidate(event.candidate);
       }
     };
 
@@ -125,7 +125,7 @@ function RTCApi({
     console.log("Call ended");
   };
 
-  const addIceCandidates = async (candidate: RTCIceCandidate) => {
+  const addIceCandidate = async (candidate: RTCIceCandidate) => {
     if (peerConnectionRef.current) {
       await peerConnectionRef.current.addIceCandidate(candidate);
     }
@@ -143,7 +143,7 @@ function RTCApi({
     }
   };
 
-  return { addIceCandidates, addSessionDescription, startCall, endCall };
+  return { addIceCandidate, addSessionDescription, startCall, endCall };
 }
 
 export default RTCApi;
