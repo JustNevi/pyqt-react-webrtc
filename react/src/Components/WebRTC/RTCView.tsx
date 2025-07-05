@@ -1,11 +1,11 @@
-import WebRTCScreen from "./WebRTCScreen";
-import WebRTCDemo from "./WebRTCDemo";
+import RTCScreen from "./RTCScreen";
+import RTCDemo from "./RTCDemo";
 
-function WebRTCView() {
-  return <WebRTCDemo></WebRTCDemo>;
+function RTCView() {
+  return <RTCDemo></RTCDemo>;
   return (
     <>
-      <WebRTCScreen></WebRTCScreen>
+      <RTCScreen></RTCScreen>
       <div className="input-group mb-3">
         <button
           className="btn btn-outline-secondary"
@@ -36,4 +36,4 @@ function WebRTCView() {
   );
 }
 
-export default WebRTCView;
+export default RTCView;

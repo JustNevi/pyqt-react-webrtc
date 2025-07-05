@@ -1,9 +1,9 @@
-import WebRTCView from "./Components/WebRTC/WebRTCView.tsx";
+import RTCView from "./Components/WebRTC/RTCView.tsx";
 
 function App() {
   return (
     <>
-      <WebRTCView></WebRTCView>
+      <RTCView></RTCView>
     </>
   );
 }

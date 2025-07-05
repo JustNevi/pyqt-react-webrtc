@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
 
-interface WebRTCProps {
+interface RTCProps {
   onError?: (error: string) => void;
 }
 
-const WebRTCDemo: React.FC<WebRTCProps> = ({ onError }) => {
+const RTCDemo: React.FC<RTCProps> = ({ onError }) => {
   const [isCallActive, setIsCallActive] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -479,4 +479,4 @@ const WebRTCDemo: React.FC<WebRTCProps> = ({ onError }) => {
   );
 };
 
-export default WebRTCDemo;
+export default RTCDemo;
