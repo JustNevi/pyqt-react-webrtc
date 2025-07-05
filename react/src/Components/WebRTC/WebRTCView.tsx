@@ -1,6 +1,8 @@
 import WebRTCScreen from "./WebRTCScreen";
+import WebRTCDemo from "./WebRTCDemo";
 
 function WebRTCView() {
+  return <WebRTCDemo></WebRTCDemo>;
   return (
     <>
       <WebRTCScreen></WebRTCScreen>
