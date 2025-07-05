@@ -1,4 +1,4 @@
-import RTCApi from "./RTCApi";
+import RTCApi from "./Api/RTCApi";
 
 export interface RTCManager {
   startCall: () => void;

@@ -1,6 +1,6 @@
 import RTCScreen from "./RTCScreen";
 //import RTCDemo from "./RTCDemo";
-import RTCManager from "./RTCManager";
+import RTCManager from "../Tools/RTCManager";
 
 function RTCView() {
   const { startCall, endCall } = RTCManager({ isOffering: true });
