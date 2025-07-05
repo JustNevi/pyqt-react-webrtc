@@ -1,37 +1,19 @@
 import RTCScreen from "./RTCScreen";
-import RTCDemo from "./RTCDemo";
+//import RTCDemo from "./RTCDemo";
+import RTCManager from "./RTCManager";
 
 function RTCView() {
-  return <RTCDemo></RTCDemo>;
+  const { startCall, endCall } = RTCManager({ isOffering: true });
+
   return (
     <>
       <RTCScreen></RTCScreen>
-      <div className="input-group mb-3">
-        <button
-          className="btn btn-outline-secondary"
-          type="button"
-          id="button-addon1"
-        >
-          Create offer
-        </button>
-        <textarea
-          className="form-control"
-          aria-label="With textarea"
-        ></textarea>
-      </div>
-      <div className="input-group mb-3">
-        <button
-          className="btn btn-outline-secondary"
-          type="button"
-          id="button-addon1"
-        >
-          Create answer
-        </button>
-        <textarea
-          className="form-control"
-          aria-label="With textarea"
-        ></textarea>
-      </div>
+      <button type="button" className="btn btn-success" onClick={startCall}>
+        Start Call
+      </button>
+      <button type="button" className="btn btn-danger" onClick={endCall}>
+        End Call
+      </button>
     </>
   );
 }
