@@ -1,4 +1,6 @@
 import RTCApi from "./Api/RTCApi";
+import type { ISignalingManager } from "./Signaling/ISignalingManager";
+import SignalingManager from "./Signaling/SignalingManager";
 
 export interface RTCManager {
   startCall: () => void;
@@ -9,13 +11,41 @@ interface Props {
   isOffering: boolean;
 }
 
-function RTCManager({ isOffering }: Props): RTCManager {
+function RTCManager({ isOffering }: Props) {
+  const signalingManager: ISignalingManager = SignalingManager();
+
   const rtcConfig: RTCConfiguration = {
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
     ],
   };
+
+  let signalIceCadidate = (candidate: RTCIceCandidate) => {
+    console.log(candidate);
+  };
+  let signalSessionDescription = (session: RTCSessionDescriptionInit) => {
+    console.log(session);
+  };
+
+  if (signalingManager != null) {
+    if (isOffering) {
+      signalIceCadidate = (candidate: RTCIceCandidate) => {
+        signalingManager.addOfferIceCandidate(candidate);
+      };
+      signalSessionDescription = (session: RTCSessionDescriptionInit) => {
+        signalingManager.addOfferSessionDescription(session);
+      };
+    } else {
+      signalIceCadidate = (candidate: RTCIceCandidate) => {
+        signalingManager.addAnswerIceCandidate(candidate);
+      };
+      signalSessionDescription = (session: RTCSessionDescriptionInit) => {
+        signalingManager.addAnswerSessionDescription(session);
+      };
+    }
+  }
+
   const { addIceCandidate, addSessionDescription, startCall, endCall } = RTCApi(
     {
       isOffering: isOffering,
@@ -31,14 +61,47 @@ function RTCManager({ isOffering }: Props): RTCManager {
       },
       onIceCandidate: (candidate) => {
         console.log("===Need to send local ICE candidate===", candidate);
+        signalIceCadidate(candidate);
       },
       onSessionDescription: (session) => {
         console.log("===Need to send local SDP===", session);
+        signalSessionDescription(session);
       },
     }
   );
 
-  return { startCall, endCall };
+  let getIceCadidates = () => {};
+  let getSessionDescription = () => {};
+
+  if (signalingManager != null) {
+    if (isOffering) {
+      getIceCadidates = () => {
+        signalingManager.getAnswerIceCandidates().forEach((candidate) => {
+          console.log("===ADDING local ICE candidate===", candidate);
+          addIceCandidate(candidate);
+        });
+      };
+      getSessionDescription = () => {
+        const session = signalingManager.getAnswerSessionDescription();
+        console.log("===ADDING local SDP===", session);
+        addSessionDescription(session);
+      };
+    } else {
+      getIceCadidates = () => {
+        signalingManager.getOfferIceCandidates().forEach((candidate) => {
+          console.log("===ADDING local ICE candidate===", candidate);
+          addIceCandidate(candidate);
+        });
+      };
+      getSessionDescription = () => {
+        const session = signalingManager.getOfferSessionDescription();
+        console.log("===ADDING local SDP===", session);
+        addSessionDescription(session);
+      };
+    }
+  }
+
+  return { startCall, endCall, getIceCadidates, getSessionDescription };
 }
 
 export default RTCManager;
