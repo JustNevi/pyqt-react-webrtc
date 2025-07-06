@@ -7,4 +7,6 @@ export interface ISignalingManager {
   getOfferSessionDescription: () => any;
   getAnswerIceCandidates: () => any[];
   getAnswerSessionDescription: () => any;
+  clearSignalingData: () => void;
+  logAllSignalingData: () => void;
 }

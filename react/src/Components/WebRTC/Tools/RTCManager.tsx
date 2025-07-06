@@ -13,6 +13,7 @@ interface Props {
 
 function RTCManager({ isOffering }: Props) {
   const signalingManager: ISignalingManager = SignalingManager();
+  const { clearSignalingData, logAllSignalingData } = signalingManager;
 
   const rtcConfig: RTCConfiguration = {
     iceServers: [
@@ -101,7 +102,14 @@ function RTCManager({ isOffering }: Props) {
     }
   }
 
-  return { startCall, endCall, getIceCadidates, getSessionDescription };
+  return {
+    startCall,
+    endCall,
+    getIceCadidates,
+    getSessionDescription,
+    clearSignalingData,
+    logAllSignalingData,
+  };
 }
 
 export default RTCManager;

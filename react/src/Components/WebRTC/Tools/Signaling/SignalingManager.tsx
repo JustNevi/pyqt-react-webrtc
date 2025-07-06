@@ -3,6 +3,7 @@ import SignalingApi from "./SignalingApi";
 
 function SignalingManager(): ISignalingManager {
   const signalingApi = SignalingApi();
+  const { clearSignalingData, logAllSignalingData } = signalingApi;
 
   const addOfferIceCandidate = (candidate: any) => {
     signalingApi.addOfferIceCandidate(candidate);
@@ -37,6 +38,8 @@ function SignalingManager(): ISignalingManager {
     getOfferSessionDescription,
     getAnswerIceCandidates,
     getAnswerSessionDescription,
+    clearSignalingData,
+    logAllSignalingData,
   };
 }
 

@@ -6,8 +6,14 @@ import RTCManager from "../Tools/RTCManager";
 function RTCView() {
   const [isOffering, setIsOffering] = useState(true);
 
-  const { startCall, endCall, getIceCadidates, getSessionDescription } =
-    RTCManager({ isOffering: isOffering });
+  const {
+    startCall,
+    endCall,
+    getIceCadidates,
+    getSessionDescription,
+    clearSignalingData,
+    logAllSignalingData,
+  } = RTCManager({ isOffering: isOffering });
 
   return (
     <>
@@ -34,6 +40,13 @@ function RTCView() {
       <button
         type="button"
         className="btn btn-secondary"
+        onClick={getSessionDescription}
+      >
+        Get SessionDescription
+      </button>
+      <button
+        type="button"
+        className="btn btn-secondary"
         onClick={getIceCadidates}
       >
         Get IceCadidates
@@ -41,9 +54,16 @@ function RTCView() {
       <button
         type="button"
         className="btn btn-secondary"
-        onClick={getSessionDescription}
+        onClick={logAllSignalingData}
       >
-        Get SessionDescription
+        Log
+      </button>
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={clearSignalingData}
+      >
+        Clear
       </button>
     </>
   );
