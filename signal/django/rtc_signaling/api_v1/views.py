@@ -235,7 +235,7 @@ def getOfferIceCandidates(request):
 
 
 @api_view(['GET'])
-def getAnswerCandidates(request):
+def getAnswerIceCandidates(request):
     """
     Retrieves ICE candidates for the client who provided the answer in a session.
     """
