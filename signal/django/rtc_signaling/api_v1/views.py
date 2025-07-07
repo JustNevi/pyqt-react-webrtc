@@ -83,7 +83,7 @@ def addAnswerSessionDescription(request):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def getOfferSessionDescription(request):
     """
     Retrieves the offer (SessionDescription) for a given session.
@@ -123,7 +123,7 @@ def getOfferSessionDescription(request):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def getAnswerSessionDescription(request):
     """
     Retrieves the answer (SessionDescription) for a given session.
@@ -198,7 +198,7 @@ def addIceCandidate(request):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def getOfferIceCandidates(request):
     """
     Retrieves ICE candidates for the client who initiated the offer in a session.
@@ -234,7 +234,7 @@ def getOfferIceCandidates(request):
                         status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def getAnswerIceCandidates(request):
     """
     Retrieves ICE candidates for the client who provided the answer in a session.
