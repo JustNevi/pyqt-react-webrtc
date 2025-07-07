@@ -18,7 +18,7 @@ def addOfferSessionDescription(request):
     offer_body = request.data.get('offer')
     session_hashpass = request.data.get('hash_pass') # Hashed pass from offerer
 
-    if not offer_body or not raw_pass:
+    if not offer_body or not session_hashpass:
         return Response({"status": "error", "message": "Missing 'offer' or 'pass' in request body."},
                         status=status.HTTP_400_BAD_REQUEST)
 
@@ -35,7 +35,6 @@ def addOfferSessionDescription(request):
         return Response({
             "status": "success",
             "client_id": client.id,
-            "pass": raw_pass # Return the original raw_pass for the other client to use
         }, status=status.HTTP_201_CREATED)
 
     except Exception as e:
