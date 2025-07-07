@@ -1,141 +1,144 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 
-export type RTCIceCandidateJSON = {
-  candidate: string;
-  sdpMid: string | null;
-  sdpMLineIndex: number | null;
-  usernameFragment: string;
-};
+interface Props {
+  endpoint: string;
+}
 
-export type RTCSessionDescriptionJSON = {
-  type: RTCSessionDescriptionInit["type"];
-  sdp: string;
-};
-
-const LS_OFFER_SDP_KEY = "webRtcOfferSdp";
-const LS_OFFER_ICE_KEY = "webRtcOfferIceCandidates";
-const LS_ANSWER_SDP_KEY = "webRtcAnswerSdp";
-const LS_ANSWER_ICE_KEY = "webRtcAnswerIceCandidates";
-
-function useSignalingApi() {
-  const [offerSdp, setOfferSdp] = useState<RTCSessionDescriptionJSON | null>(
-    null
-  );
-  const [offerIceCandidates, setOfferIceCandidates] = useState<
-    RTCIceCandidateJSON[]
-  >([]);
-  const [answerSdp, setAnswerSdp] = useState<RTCSessionDescriptionJSON | null>(
-    null
-  );
-  const [answerIceCandidates, setAnswerIceCandidates] = useState<
-    RTCIceCandidateJSON[]
-  >([]);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    const loadData = () => {
-      const offerSdp = localStorage.getItem(LS_OFFER_SDP_KEY);
-      const offerIce = localStorage.getItem(LS_OFFER_ICE_KEY);
-      const answerSdp = localStorage.getItem(LS_ANSWER_SDP_KEY);
-      const answerIce = localStorage.getItem(LS_ANSWER_ICE_KEY);
-
-      if (offerSdp) setOfferSdp(JSON.parse(offerSdp));
-      if (offerIce) setOfferIceCandidates(JSON.parse(offerIce));
-      if (answerSdp) setAnswerSdp(JSON.parse(answerSdp));
-      if (answerIce) setAnswerIceCandidates(JSON.parse(answerIce));
+function SignalingApi({ endpoint }: Props) {
+  const getRequestOptions = useCallback((method: string, body: {}) => {
+    return {
+      method: method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     };
-
-    loadData();
-
-    // Listen to changes from other tabs
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === LS_OFFER_SDP_KEY && event.newValue)
-        setOfferSdp(JSON.parse(event.newValue));
-      if (event.key === LS_OFFER_ICE_KEY && event.newValue)
-        setOfferIceCandidates(JSON.parse(event.newValue));
-      if (event.key === LS_ANSWER_SDP_KEY && event.newValue)
-        setAnswerSdp(JSON.parse(event.newValue));
-      if (event.key === LS_ANSWER_ICE_KEY && event.newValue)
-        setAnswerIceCandidates(JSON.parse(event.newValue));
-    };
-
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const addOfferSessionDescription = useCallback(
-    (session: RTCSessionDescriptionInit) => {
-      const json = { type: session.type, sdp: session.sdp || "" };
-      localStorage.setItem(LS_OFFER_SDP_KEY, JSON.stringify(json));
-      setOfferSdp(json);
+  const fetcher = useCallback(
+    (url: string, options: {}, onResponse: (data: any) => void) => {
+      fetch(url, options)
+        .then((res) => res.json())
+        .then((data) => {
+          onResponse(data);
+        });
     },
     []
   );
 
-  const addOfferIceCandidate = useCallback((candidate: RTCIceCandidate) => {
-    const jsonCandidate = candidate.toJSON();
-    const current = JSON.parse(localStorage.getItem(LS_OFFER_ICE_KEY) || "[]");
-    const updated = [...current, jsonCandidate];
-    localStorage.setItem(LS_OFFER_ICE_KEY, JSON.stringify(updated));
-    setOfferIceCandidates(updated);
-  }, []);
+  // @ts-ignore
+  const addOfferSessionDescription = (
+    hash_pass: string,
+    session: any,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      offer: session,
+      hash_pass: hash_pass,
+    });
 
-  const addAnswerSessionDescription = useCallback(
-    (session: RTCSessionDescriptionInit) => {
-      const json = { type: session.type, sdp: session.sdp || "" };
-      localStorage.setItem(LS_ANSWER_SDP_KEY, JSON.stringify(json));
-      setAnswerSdp(json);
-    },
-    []
-  );
+    fetcher(endpoint + "add-offer-sd/", options, (data) => {
+      callback(data);
+    });
+  };
 
-  const addAnswerIceCandidate = useCallback((candidate: RTCIceCandidate) => {
-    const jsonCandidate = candidate.toJSON();
-    const current = JSON.parse(localStorage.getItem(LS_ANSWER_ICE_KEY) || "[]");
-    const updated = [...current, jsonCandidate];
-    localStorage.setItem(LS_ANSWER_ICE_KEY, JSON.stringify(updated));
-    setAnswerIceCandidates(updated);
-  }, []);
+  // @ts-ignore
+  const addAnswerSessionDescription = (
+    pass: string,
+    session: any,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      answer: session,
+      pass: pass,
+    });
 
-  const clearSignalingData = useCallback(() => {
-    localStorage.removeItem(LS_OFFER_SDP_KEY);
-    localStorage.removeItem(LS_OFFER_ICE_KEY);
-    localStorage.removeItem(LS_ANSWER_SDP_KEY);
-    localStorage.removeItem(LS_ANSWER_ICE_KEY);
-    setOfferSdp(null);
-    setOfferIceCandidates([]);
-    setAnswerSdp(null);
-    setAnswerIceCandidates([]);
-  }, []);
+    fetcher(endpoint + "add-answer-sd/", options, (data) => {
+      callback(data);
+    });
+  };
 
-  const logAllSignalingData = useCallback(() => {
-    console.log("=== Signaling Data ===");
+  // @ts-ignore
+  const getOfferSessionDescription = (
+    pass: string,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      pass: pass,
+    });
 
-    console.log("Offer SDP:", offerSdp);
-    console.log("Offer ICE Candidates:", offerIceCandidates);
+    fetcher(endpoint + "get-offer-sd/", options, (data) => {
+      callback(data);
+    });
+  };
 
-    console.log("Answer SDP:", answerSdp);
-    console.log("Answer ICE Candidates:", answerIceCandidates);
+  // @ts-ignore
+  const getAnswerSessionDescription = (
+    pass: string,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      pass: pass,
+    });
 
-    console.log("=== LocalStorage Raw ===");
-    console.log(LS_OFFER_SDP_KEY, localStorage.getItem(LS_OFFER_SDP_KEY));
-    console.log(LS_OFFER_ICE_KEY, localStorage.getItem(LS_OFFER_ICE_KEY));
-    console.log(LS_ANSWER_SDP_KEY, localStorage.getItem(LS_ANSWER_SDP_KEY));
-    console.log(LS_ANSWER_ICE_KEY, localStorage.getItem(LS_ANSWER_ICE_KEY));
-  }, [offerSdp, offerIceCandidates, answerSdp, answerIceCandidates]);
+    fetcher(endpoint + "get-answer-sd/", options, (data) => {
+      callback(data);
+    });
+  };
+
+  // @ts-ignore
+  const addIceCandidate = (
+    clientId: number,
+    pass: string,
+    candidate: any,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      client_id: clientId,
+      pass: pass,
+      candidate: candidate,
+    });
+
+    fetcher(endpoint + "add-ice-candidate/", options, (data) => {
+      callback(data);
+    });
+  };
+
+  // @ts-ignore
+  const getOfferIceCandidates = (
+    pass: string,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      pass: pass,
+    });
+
+    fetcher(endpoint + "get-offer-ice-candidates/", options, (data) => {
+      callback(data);
+    });
+  };
+
+  // @ts-ignore
+  const getAnswerIceCandidates = (
+    pass: string,
+    callback: (resonse: any) => void
+  ) => {
+    const options = getRequestOptions("POST", {
+      pass: pass,
+    });
+
+    fetcher(endpoint + "get-answer-ice-candidates/", options, (data) => {
+      callback(data);
+    });
+  };
 
   return {
     addOfferSessionDescription,
-    addOfferIceCandidate,
     addAnswerSessionDescription,
-    addAnswerIceCandidate,
-    getOfferSessionDescription: () => offerSdp,
-    getOfferIceCandidates: () => offerIceCandidates,
-    getAnswerSessionDescription: () => answerSdp,
-    getAnswerIceCandidates: () => answerIceCandidates,
-    clearSignalingData,
-    logAllSignalingData,
+    getOfferSessionDescription,
+    getAnswerSessionDescription,
+    addIceCandidate,
+    getOfferIceCandidates,
+    getAnswerIceCandidates,
   };
 }
 
-export default useSignalingApi;
+export default SignalingApi;

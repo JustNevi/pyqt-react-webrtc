@@ -9,11 +9,16 @@ export interface RTCManager {
 
 interface Props {
   isOffering: boolean;
+  pass?: string;
+  onPass: (pass: string) => void;
 }
 
-function RTCManager({ isOffering }: Props) {
-  const signalingManager: ISignalingManager = SignalingManager();
-  const { clearSignalingData, logAllSignalingData } = signalingManager;
+function RTCManager({ isOffering, pass, onPass }: Props) {
+  const signalingManager: ISignalingManager = SignalingManager({
+    isOffering: isOffering,
+    pass: pass,
+    onPass: onPass,
+  });
 
   const rtcConfig: RTCConfiguration = {
     iceServers: [
@@ -61,11 +66,11 @@ function RTCManager({ isOffering }: Props) {
         console.log("===Remote stream available===", stream);
       },
       onIceCandidate: (candidate) => {
-        console.log("===Need to send local ICE candidate===", candidate);
+        //console.log("===Need to send local ICE candidate===", candidate);
         signalIceCadidate(candidate);
       },
       onSessionDescription: (session) => {
-        console.log("===Need to send local SDP===", session);
+        //console.log("===Need to send local SDP===", session);
         signalSessionDescription(session);
       },
     }
@@ -78,25 +83,21 @@ function RTCManager({ isOffering }: Props) {
     if (isOffering) {
       getIceCadidates = () => {
         signalingManager.getAnswerIceCandidates().forEach((candidate) => {
-          console.log("===ADDING local ICE candidate===", candidate);
           addIceCandidate(candidate);
         });
       };
       getSessionDescription = () => {
         const session = signalingManager.getAnswerSessionDescription();
-        console.log("===ADDING local SDP===", session);
         addSessionDescription(session);
       };
     } else {
       getIceCadidates = () => {
         signalingManager.getOfferIceCandidates().forEach((candidate) => {
-          console.log("===ADDING local ICE candidate===", candidate);
           addIceCandidate(candidate);
         });
       };
       getSessionDescription = () => {
         const session = signalingManager.getOfferSessionDescription();
-        console.log("===ADDING local SDP===", session);
         addSessionDescription(session);
       };
     }
@@ -107,8 +108,6 @@ function RTCManager({ isOffering }: Props) {
     endCall,
     getIceCadidates,
     getSessionDescription,
-    clearSignalingData,
-    logAllSignalingData,
   };
 }
 
