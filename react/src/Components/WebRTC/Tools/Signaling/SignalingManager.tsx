@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import type { ISignalingManager } from "./ISignalingManager";
+// import type { ISignalingManager } from "./ISignalingManager";
 import SignalingApi from "./SignalingApi";
 
 import { sha256, makeid } from "../../../Units/Units";
@@ -10,16 +10,12 @@ interface Props {
   onPass: (pass: string) => void;
 }
 
-function SignalingManager({
-  isOffering,
-  pass,
-  onPass,
-}: Props): ISignalingManager {
+function SignalingManager({ isOffering, pass, onPass }: Props) {
   const endpoint = "http://127.0.0.1:8000/api/v1/";
   const passRef = useRef("");
   const hashPassRef = useRef("");
   const clientIdRef = useRef(0);
-  const iceCandidatesRef = useRef<Array<any>>([]);
+  const iceCandidatesRef = useRef<any[]>([]);
 
   const signalingApi = SignalingApi({ endpoint: endpoint });
 
@@ -66,21 +62,31 @@ function SignalingManager({
     );
   };
 
-  const getOfferSessionDescription = () => {
+  const getOfferSessionDescription = (onSession: (session: any) => void) => {
     signalingApi.getOfferSessionDescription(passRef.current, (response) => {
       // Log
       console.log("getOfferSessionDescription", response);
-    });
 
-    return null;
+      if (response) {
+        if (response.status && response.status == "success") {
+          console.log(response.offer);
+          onSession(response.offer);
+        }
+      }
+    });
   };
-  const getAnswerSessionDescription = () => {
+  const getAnswerSessionDescription = (onSession: (session: any) => void) => {
     signalingApi.getAnswerSessionDescription(passRef.current, (response) => {
       // Log
       console.log("getAnswerSessionDescription", response);
-    });
 
-    return null;
+      if (response) {
+        if (response.status && response.status == "success") {
+          console.log(response.answer);
+          onSession(response.answer);
+        }
+      }
+    });
   };
 
   const addIceCandidate = (iceCandidate: any) => {
@@ -107,21 +113,31 @@ function SignalingManager({
     addIceCandidate(candidate);
   };
 
-  const getOfferIceCandidates = () => {
+  const getOfferIceCandidates = (onCandidates: (candidates: any[]) => void) => {
     signalingApi.getOfferIceCandidates(passRef.current, (response) => {
       // Log
       console.log("getOfferIceCandidates", response);
-    });
 
-    return [];
+      if (response) {
+        if (response.status && response.status == "success") {
+          onCandidates(response.candidates);
+        }
+      }
+    });
   };
-  const getAnswerIceCandidates = () => {
+  const getAnswerIceCandidates = (
+    onCandidates: (candidates: any[]) => void
+  ) => {
     signalingApi.getAnswerIceCandidates(passRef.current, (response) => {
       // Log
       console.log("getAnswerIceCandidates", response);
-    });
 
-    return [];
+      if (response) {
+        if (response.status && response.status == "success") {
+          onCandidates(response.candidates);
+        }
+      }
+    });
   };
 
   return {

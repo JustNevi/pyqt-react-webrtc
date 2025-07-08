@@ -1,5 +1,5 @@
 import RTCApi from "./Api/RTCApi";
-import type { ISignalingManager } from "./Signaling/ISignalingManager";
+//import type { ISignalingManager } from "./Signaling/ISignalingManager";
 import SignalingManager from "./Signaling/SignalingManager";
 
 export interface RTCManager {
@@ -14,7 +14,7 @@ interface Props {
 }
 
 function RTCManager({ isOffering, pass, onPass }: Props) {
-  const signalingManager: ISignalingManager = SignalingManager({
+  const signalingManager = SignalingManager({
     isOffering: isOffering,
     pass: pass,
     onPass: onPass,
@@ -82,23 +82,29 @@ function RTCManager({ isOffering, pass, onPass }: Props) {
   if (signalingManager != null) {
     if (isOffering) {
       getIceCadidates = () => {
-        signalingManager.getAnswerIceCandidates().forEach((candidate) => {
-          addIceCandidate(candidate);
+        signalingManager.getAnswerIceCandidates((candidates: any[]) => {
+          candidates.forEach((candidate) => {
+            addIceCandidate(candidate);
+          });
         });
       };
       getSessionDescription = () => {
-        const session = signalingManager.getAnswerSessionDescription();
-        addSessionDescription(session);
+        signalingManager.getAnswerSessionDescription((session: any) => {
+          addSessionDescription(session);
+        });
       };
     } else {
       getIceCadidates = () => {
-        signalingManager.getOfferIceCandidates().forEach((candidate) => {
-          addIceCandidate(candidate);
+        signalingManager.getOfferIceCandidates((candidates: any[]) => {
+          candidates.forEach((candidate) => {
+            addIceCandidate(candidate);
+          });
         });
       };
       getSessionDescription = () => {
-        const session = signalingManager.getOfferSessionDescription();
-        addSessionDescription(session);
+        signalingManager.getOfferSessionDescription((session: any) => {
+          addSessionDescription(session);
+        });
       };
     }
   }
