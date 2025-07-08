@@ -1,3 +1,6 @@
+import json
+import ast # Used for safely evaluating Python literal strings
+
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -8,6 +11,22 @@ from .models import Session, Client, SessionDescription, IceCandidate
 # Helper function to hash passwords consistently
 def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
+def parse_python_dict_string(s: str):
+    """
+    Safely parses a string that looks like a Python dictionary
+    into a Python dictionary.
+    """
+    try:
+        # Try to parse as valid JSON first (ideal case)
+        return json.loads(s)
+    except json.JSONDecodeError:
+        # If it's not valid JSON, assume it's a Python literal
+        try:
+            return ast.literal_eval(s)
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f"String is neither valid JSON nor a Python literal: {s}. Error: {e}")
+
 
 @api_view(['POST'])
 def addOfferSessionDescription(request):
@@ -106,9 +125,16 @@ def getOfferSessionDescription(request):
 
         offer_sdp = SessionDescription.objects.get(client=offerer_client)
 
+        try:
+            # Use the helper to parse the string into a Python dictionary
+            parsed_offer_body = parse_python_dict_string(offer_sdp.body)
+        except ValueError as e:
+            return Response({"status": "error", "message": f"Malformed offer SDP body: {e}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         return Response({
             "status": "success",
-            "offer": offer_sdp.body
+            "offer": parsed_offer_body
         }, status=status.HTTP_200_OK)
 
     except Session.DoesNotExist:
@@ -147,9 +173,15 @@ def getAnswerSessionDescription(request):
 
         answer_sdp = SessionDescription.objects.get(client=answerer_client)
 
+        try:
+            # Use the helper to parse the string into a Python dictionary
+            parsed_answer_body = parse_python_dict_string(answer_sdp.body)
+        except ValueError as e:
+            return Response({"status": "error", "message": f"Malformed offer SDP body: {e}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         return Response({
             "status": "success",
-            "answer": answer_sdp.body
+            "answer": parsed_answer_body
         }, status=status.HTTP_200_OK)
 
     except Session.DoesNotExist:
@@ -218,11 +250,18 @@ def getOfferIceCandidates(request):
             return Response({"status": "error", "message": "No offerer found for this session."},
                             status=status.HTTP_404_NOT_FOUND)
 
-        candidates = IceCandidate.objects.filter(client=offerer_client).values_list('body', flat=True)
-
+        raw_candidates_bodies = IceCandidate.objects.filter(client=offerer_client).values_list('body', flat=True)
+        
+        parsed_candidates = []
+        for body_string in raw_candidates_bodies:
+            try:
+                parsed_candidates.append(parse_python_dict_string(body_string))
+            except ValueError as e:
+                print(f"Warning: Malformed ICE candidate body encountered: {body_string}. Error: {e}")
+               
         return Response({
             "status": "success",
-            "candidates": list(candidates)
+            "candidates": parsed_candidates
         }, status=status.HTTP_200_OK)
 
     except Session.DoesNotExist:
@@ -255,11 +294,18 @@ def getAnswerIceCandidates(request):
 
         answerer_client = clients_in_session[1]
 
-        candidates = IceCandidate.objects.filter(client=answerer_client).values_list('body', flat=True)
+        raw_candidates_bodies = IceCandidate.objects.filter(client=answerer_client).values_list('body', flat=True)
+
+        parsed_candidates = []
+        for body_string in raw_candidates_bodies:
+            try:
+                parsed_candidates.append(parse_python_dict_string(body_string))
+            except ValueError as e:
+                print(f"Warning: Malformed ICE candidate body encountered: {body_string}. Error: {e}")
 
         return Response({
             "status": "success",
-            "candidates": list(candidates)
+            "candidates": parsed_candidates
         }, status=status.HTTP_200_OK)
 
     except Session.DoesNotExist:
