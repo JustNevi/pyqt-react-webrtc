@@ -1,43 +1,44 @@
+# client.py
+
 import asyncio
 import aiohttp
-import cv2
 from aiortc import RTCPeerConnection, RTCSessionDescription
+from aiortc.contrib.media import MediaPlayer
 
-async def display_video(track):
-    while True:
-        frame = await track.recv()
-        img = frame.to_ndarray(format="bgr24")
-        cv2.imshow("Екран з сервера", img)
-        if cv2.waitKey(1) & 0xFF == ord("q"):
-            cv2.destroyAllWindows()
-            break
-
-async def run():
+async def run_webrtc_client():
     pc = RTCPeerConnection()
+    print("WEBRtc client initialized...")
 
-    @pc.on("track")
-    def on_track(track):
-        print("Отримано відеотрек 🎥")
-        asyncio.create_task(display_video(track))
+    player = MediaPlayer("/dev/video0")
+    video_track = player.video
+    pc.addTrack(video_track)
 
+    offer = await pc.createOffer()
+    await pc.setLocalDescription(offer)
     async with aiohttp.ClientSession() as session:
-        offer = await pc.createOffer()
-        await pc.setLocalDescription(offer)
-
-        async with session.post("http://localhost:8080/offer", json={
-            "sdp": pc.localDescription.sdp,
-            "type": pc.localDescription.type,
+        async with session.post("http://127.0.0.1:8080/offer", json={
+            "sdp": {
+                "type": pc.localDescription.type,
+                "sdp": pc.localDescription.sdp
+            }
         }) as resp:
             answer = await resp.json()
 
-        await pc.setRemoteDescription(RTCSessionDescription(
-            sdp=answer["sdp"], type=answer["type"]
-        ))
+    remote_desc = RTCSessionDescription(
+        sdp=answer["sdp"]["sdp"],
+        type=answer["sdp"]["type"]
+    )
+    await pc.setRemoteDescription(remote_desc)
 
-    await asyncio.Future()
+    print("✅ Client connected. Video streaming...")
+
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        await pc.close()
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(run())
-    except KeyboardInterrupt:
-        print("Клієнт зупинено.")
+    asyncio.run(run_webrtc_client())
