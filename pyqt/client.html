@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>WebRTC Video Stream</title>
+</head>
+<body>
+  <h2>Камера → Сервер (WebRTC)</h2>
+  <video id="video" autoplay playsinline muted></video>
+  <script>
+    async function start() {
+      const pc = new RTCPeerConnection();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      document.getElementById('video').srcObject = stream;
+
+      for (const track of stream.getTracks()) {
+        pc.addTrack(track, stream);
+      }
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+
+      const response = await fetch('/offer', {
+        method: 'POST',
+        body: JSON.stringify({ sdp: pc.localDescription }),
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const answer = await response.json();
+      await pc.setRemoteDescription(answer.sdp);
+    }
+
+    start();
+  </script>
+</body>
+</html>

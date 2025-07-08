@@ -1,36 +1,34 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5 import QtWidgets
+import asyncio
+from PyQt5.QtWidgets import QApplication
+import qasync
+from gui import MainWindow
+from server import app
+from aiohttp import web
+import queue
+import server
 
-class MyWindow(QWidget):
-    def setupUi(self):
-        self.setWindowTitle("Goyda")
-        self.setGeometry(100, 100, 400, 300)
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self)
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
 
-        self.logs_list = QtWidgets.QListWidget(self)
-        self.connections_list = QtWidgets.QListWidget(self)
-        self.accept_connection_button = QtWidgets.QPushButton("Accept Connection", self)
+async def start_server():
+    print('STARTED')
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, host="127.0.0.1", port=8080)
+    await site.start()
+    print("🌐 Aiohttp server started at http://127.0.0.1:8080")
 
-        self.horizontalLayout.addLayout(self.verticalLayout)
-        self.horizontalLayout.addWidget(self.logs_list)
-        self.verticalLayout.addWidget(self.connections_list)
-        self.verticalLayout.addWidget(self.accept_connection_button)
 
-        self.add_new_connection()
-
-    def add_new_connection(self):
-        self.connections_list.addItem("New Connection")
-        self.connections_list.addItem("Another Connection")
-        self.connections_list.addItem("Yet Another Connection")
-
-    def __init__(self):
-        super().__init__()
-        self.setupUi()
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    window = MyWindow()
+if __name__ == "__main__":
+    app_qt = QApplication(sys.argv)
+    loop = qasync.QEventLoop(app_qt)
+    asyncio.set_event_loop(loop)
+    frame_queue = queue.Queue()
+    server.frame_queue = frame_queue
+    window = MainWindow(frame_queue)
+    print("GUI started")
     window.show()
-    sys.exit(app.exec_())
+
+    with loop:
+        loop.run_until_complete(start_server())
+        loop.run_forever()
