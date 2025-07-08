@@ -77,7 +77,7 @@ function RTCApi({
   // Get user media
   const getUserMedia = async (): Promise<MediaStream> => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getDisplayMedia({
         video: useVideo,
         audio: useAudio,
       });

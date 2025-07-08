@@ -8,12 +8,21 @@ function RTCView() {
   const [password, setPassword] = useState("");
   const [offerPassword, setOfferPassword] = useState("");
 
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
   const { startCall, endCall, getIceCadidates, getSessionDescription } =
     RTCManager({
       isOffering: isOffering,
       pass: offerPassword,
       onPass: (pass) => {
         setPassword(pass);
+      },
+      onLocalStream: (stream) => {
+        setLocalStream(stream);
+      },
+      onRemoteStream: (stream) => {
+        setRemoteStream(stream);
       },
     });
 
@@ -32,7 +41,10 @@ function RTCView() {
         </label>
       </div>
 
-      <RTCScreen></RTCScreen>
+      <RTCScreen
+        localVideoStream={localStream}
+        remoteVideoStream={remoteStream}
+      ></RTCScreen>
       <button type="button" className="btn btn-success" onClick={startCall}>
         Start Call
       </button>

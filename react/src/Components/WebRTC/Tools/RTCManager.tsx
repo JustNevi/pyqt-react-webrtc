@@ -11,9 +11,17 @@ interface Props {
   isOffering: boolean;
   pass?: string;
   onPass: (pass: string) => void;
+  onLocalStream: (stream: MediaStream) => void;
+  onRemoteStream: (stream: MediaStream) => void;
 }
 
-function RTCManager({ isOffering, pass, onPass }: Props) {
+function RTCManager({
+  isOffering,
+  pass,
+  onPass,
+  onLocalStream,
+  onRemoteStream,
+}: Props) {
   const signalingManager = SignalingManager({
     isOffering: isOffering,
     pass: pass,
@@ -61,9 +69,11 @@ function RTCManager({ isOffering, pass, onPass }: Props) {
       config: rtcConfig,
       onLocalStream: (stream) => {
         console.log("===Local stream available===", stream);
+        onLocalStream(stream);
       },
       onRemoteStream: (stream) => {
         console.log("===Remote stream available===", stream);
+        onRemoteStream(stream);
       },
       onIceCandidate: (candidate) => {
         //console.log("===Need to send local ICE candidate===", candidate);
