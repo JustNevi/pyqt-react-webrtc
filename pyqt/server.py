@@ -3,7 +3,10 @@ from aiohttp import web
 from aiortc import RTCPeerConnection, MediaStreamTrack, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole
 from PyQt5.QtGui import QImage, QPixmap
+from av import VideoFrame
+import cv2
 import queue
+import asyncio
 
 
 pcs = set()
@@ -13,30 +16,32 @@ HTML_PATH = os.path.join(BASE_DIR, 'client.html')
 frame_queue = None
 pcs = set()
 
-class VideoReceiver(MediaStreamTrack):
-    kind = "video"
-
-    def __init__(self, track, frame_queue):
-        super().__init__()
+class VideoReceiver:
+    def __init__(self, track: MediaStreamTrack, frame_queue):
         self.track = track
         self.frame_queue = frame_queue
-        print(self.frame_queue)
+        self.running = True
 
-    async def recv(self):
-        frame = await self.track.recv()
-        print("🎥 Отримано кадр")
-        img = frame.to_ndarray(format="bgr24")
+    async def run(self):
+        while self.running:
+            try:
+                frame: VideoFrame = await self.track.recv()
+                img = frame.to_ndarray(format="bgr24")
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        h, w, ch = img.shape
-        bytes_per_line = ch * w
-        qimg = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888).rgbSwapped()
-        pixmap = QPixmap.fromImage(qimg)
+                h, w, ch = img.shape
+                bytes_per_line = ch * w
+                qt_image = QImage(img.data, w, h, bytes_per_line, QImage.Format_RGB888)
+                pixmap = QPixmap.fromImage(qt_image)
 
-        try:
-            self.frame_queue.put_nowait(pixmap)
-        except queue.Full:
-            pass
-        return frame
+                # Тільки останній кадр лишаємо
+                while not self.frame_queue.empty():
+                    self.frame_queue.get_nowait()
+                self.frame_queue.put_nowait(pixmap)
+
+            except Exception as e:
+                print(f"[❌] VideoReceiver error: {e}")
+                self.running = False
 
 async def offer(request):
     params = await request.json()
@@ -51,8 +56,9 @@ async def offer(request):
     @pc.on("track")
     def on_track(track):
         if track.kind == "video":
+            print("🎥 Вхідний відеотрек отримано")
             receiver = VideoReceiver(track, frame_queue)
-            pc.addTrack(receiver)
+            asyncio.create_task(receiver.run())
 
     await pc.setRemoteDescription(offer)
     answer = await pc.createAnswer()
