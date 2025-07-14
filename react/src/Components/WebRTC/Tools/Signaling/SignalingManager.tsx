@@ -56,6 +56,7 @@ function SignalingManager({ isOffering, pass, onPass }: Props) {
       passRef.current,
       session,
       (response) => {
+        clientIdRef.current = response.client_id;
         // Log
         console.log("addAnswerSessionDescription", response);
       }
