@@ -7,24 +7,30 @@ function RTCView() {
   const [isOffering, setIsOffering] = useState(true);
   const [password, setPassword] = useState("");
   const [offerPassword, setOfferPassword] = useState("");
+  const [message, setMessage] = useState("");
 
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
 
-  const { startCall, endCall, getIceCadidates, getSessionDescription } =
-    RTCManager({
-      isOffering: isOffering,
-      pass: offerPassword,
-      onPass: (pass) => {
-        setPassword(pass);
-      },
-      onLocalStream: (stream) => {
-        setLocalStream(stream);
-      },
-      onRemoteStream: (stream) => {
-        setRemoteStream(stream);
-      },
-    });
+  const {
+    startCall,
+    endCall,
+    getIceCadidates,
+    getSessionDescription,
+    sendData,
+  } = RTCManager({
+    isOffering: isOffering,
+    pass: offerPassword,
+    onPass: (pass) => {
+      setPassword(pass);
+    },
+    onLocalStream: (stream) => {
+      setLocalStream(stream);
+    },
+    onRemoteStream: (stream) => {
+      setRemoteStream(stream);
+    },
+  });
 
   return (
     <>
@@ -81,6 +87,29 @@ function RTCView() {
             setOfferPassword(event.target.value);
           }}
         />
+      </div>
+
+      <div className="input-group mb-3">
+        <input
+          type="text"
+          className="form-control"
+          placeholder="Message"
+          aria-label="Message"
+          aria-describedby="button-addon2"
+          onChange={(event) => {
+            setMessage(event.target.value);
+          }}
+        />
+        <button
+          className="btn btn-outline-secondary"
+          type="button"
+          id="button-addon2"
+          onClick={() => {
+            sendData(message);
+          }}
+        >
+          Send
+        </button>
       </div>
     </>
   );

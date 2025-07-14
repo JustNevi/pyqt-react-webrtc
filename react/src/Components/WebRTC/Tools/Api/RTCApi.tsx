@@ -1,10 +1,11 @@
 import { useRef } from "react";
 
 export interface RTCApi {
-  addIceCandidate: (candidate: RTCIceCandidate) => void;
-  addSessionDescription: (session: RTCSessionDescriptionInit) => void;
   startCall: () => void;
   endCall: () => void;
+  addIceCandidate: (candidate: RTCIceCandidate) => void;
+  addSessionDescription: (session: RTCSessionDescriptionInit) => void;
+  sendData: (data: string) => void;
 }
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
   onRemoteStream: (stream: MediaStream) => void;
   onIceCandidate: (candidate: RTCIceCandidate) => void;
   onSessionDescription: (session: RTCSessionDescriptionInit) => void;
+  onDataMessage: (data: string) => void;
   onError?: (error: string) => void;
 }
 
@@ -33,10 +35,32 @@ function RTCApi({
   onRemoteStream,
   onIceCandidate,
   onSessionDescription,
+  onDataMessage,
   onError,
 }: Props): RTCApi {
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
+
+  const setupDataChannel = (channel: RTCDataChannel) => {
+    channel.onopen = () => {
+      console.log("Data channel opened:", channel.label);
+      dataChannelRef.current = channel; // Store the active data channel
+    };
+    channel.onmessage = (event) => {
+      console.log("Message received:", event.data);
+      onDataMessage(event.data); // Pass received message to callback
+    };
+    channel.onclose = () => {
+      console.log("Data channel closed:", channel.label);
+      if (dataChannelRef.current === channel) {
+        dataChannelRef.current = null;
+      }
+    };
+    channel.onerror = (error) => {
+      console.error("Data channel error:", channel.label, error);
+      onError?.(`Data channel error: ${error}`);
+    };
+  };
 
   const initializePeerConnection = (): RTCPeerConnection => {
     const pc = new RTCPeerConnection(config);
@@ -63,12 +87,16 @@ function RTCApi({
     };
 
     if (useData) {
-      const dataChannel = pc.createDataChannel("messages");
-      dataChannel.onopen = () => console.log("Data channel opened");
-      dataChannel.onmessage = (event) => {
-        console.log("Message received:", event.data);
+      pc.ondatachannel = (event) => {
+        console.log("Remote data channel received:", event.channel.label);
+        setupDataChannel(event.channel);
       };
-      dataChannelRef.current = dataChannel;
+
+      if (isOffering) {
+        const dataChannel = pc.createDataChannel("message-channel", {});
+        setupDataChannel(dataChannel);
+        dataChannelRef.current = dataChannel;
+      }
     }
 
     return pc;
@@ -143,7 +171,26 @@ function RTCApi({
     }
   };
 
-  return { addIceCandidate, addSessionDescription, startCall, endCall };
+  const sendData = (data: string) => {
+    if (
+      dataChannelRef.current &&
+      dataChannelRef.current.readyState === "open"
+    ) {
+      dataChannelRef.current.send(data);
+      console.log("Message sent:", data);
+    } else {
+      console.warn("Data channel is not open. Cannot send message:", data);
+      onError?.("Data channel not open. Message not sent.");
+    }
+  };
+
+  return {
+    startCall,
+    endCall,
+    addIceCandidate,
+    addSessionDescription,
+    sendData,
+  };
 }
 
 export default RTCApi;

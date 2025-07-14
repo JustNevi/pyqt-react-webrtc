@@ -1,5 +1,4 @@
 import RTCApi from "./Api/RTCApi";
-//import type { ISignalingManager } from "./Signaling/ISignalingManager";
 import SignalingManager from "./Signaling/SignalingManager";
 
 export interface RTCManager {
@@ -60,31 +59,38 @@ function RTCManager({
     }
   }
 
-  const { addIceCandidate, addSessionDescription, startCall, endCall } = RTCApi(
-    {
-      isOffering: isOffering,
-      useVideo: true,
-      useAudio: true,
-      useData: true,
-      config: rtcConfig,
-      onLocalStream: (stream) => {
-        console.log("===Local stream available===", stream);
-        onLocalStream(stream);
-      },
-      onRemoteStream: (stream) => {
-        console.log("===Remote stream available===", stream);
-        onRemoteStream(stream);
-      },
-      onIceCandidate: (candidate) => {
-        //console.log("===Need to send local ICE candidate===", candidate);
-        signalIceCadidate(candidate);
-      },
-      onSessionDescription: (session) => {
-        //console.log("===Need to send local SDP===", session);
-        signalSessionDescription(session);
-      },
-    }
-  );
+  const {
+    startCall,
+    endCall,
+    addIceCandidate,
+    addSessionDescription,
+    sendData,
+  } = RTCApi({
+    isOffering: isOffering,
+    useVideo: true,
+    useAudio: true,
+    useData: true,
+    config: rtcConfig,
+    onLocalStream: (stream) => {
+      console.log("===Local stream available===", stream);
+      onLocalStream(stream);
+    },
+    onRemoteStream: (stream) => {
+      console.log("===Remote stream available===", stream);
+      onRemoteStream(stream);
+    },
+    onIceCandidate: (candidate) => {
+      //console.log("===Need to send local ICE candidate===", candidate);
+      signalIceCadidate(candidate);
+    },
+    onSessionDescription: (session) => {
+      //console.log("===Need to send local SDP===", session);
+      signalSessionDescription(session);
+    },
+    onDataMessage: (message: string) => {
+      console.log("Message:", message);
+    },
+  });
 
   let getIceCadidates = () => {};
   let getSessionDescription = () => {};
@@ -124,6 +130,7 @@ function RTCManager({
     endCall,
     getIceCadidates,
     getSessionDescription,
+    sendData,
   };
 }
 
