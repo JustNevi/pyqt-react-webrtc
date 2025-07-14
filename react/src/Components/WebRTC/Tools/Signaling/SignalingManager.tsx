@@ -1,5 +1,4 @@
 import { useRef, useEffect } from "react";
-// import type { ISignalingManager } from "./ISignalingManager";
 import SignalingApi from "./SignalingApi";
 
 import { sha256, makeid } from "../../../Units/Units";
