@@ -1,4 +1,4 @@
-import RTCView from "./Components/WebRTC/Views/RTCView.tsx";
+import RTCView from "./components/WebRTC/Views/RTCView.tsx";
 
 function App() {
   return (
